@@ -6,12 +6,18 @@ exports.handler = function(context, event, callback) {
     const axios = require('axios').default;
   
     axios({
-      method: 'get',
-      url: context.APALEO_API_DOMAIN + '/booking/v1/reservations/?textSearch' + event.booking_id + '&status=Confirmed,InHouse',
+      method: 'patch',
+      url: context.APALEO_API_DOMAIN + '/booking/v1/reservations/' + event.reservation_id,
       responseType: 'json',
       headers: {
-        'Authorization': 'Bearer ' + event.apaleo_token
-      }
+        'Authorization': 'Bearer ' + event.apaleo_token,
+        'Content-Type': 'application/json'
+      },
+      data: [
+        {"value": event.comment,
+        "path": "/guestComment",
+        "op": "add"}
+      ]
     })
     .then(function (response) {
       console.log(response.data);
