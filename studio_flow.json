@@ -1,0 +1,817 @@
+{
+    "description": "A New Flow",
+    "states": [
+      {
+        "name": "Trigger",
+        "type": "trigger",
+        "transitions": [
+          {
+            "next": "init_variables",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "incomingCall"
+          },
+          {
+            "event": "incomingConversationMessage"
+          },
+          {
+            "event": "incomingRequest"
+          },
+          {
+            "event": "incomingParent"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      },
+      {
+        "name": "init_variables",
+        "type": "set-variables",
+        "transitions": [
+          {
+            "next": "get_apaleo_token",
+            "event": "next"
+          }
+        ],
+        "properties": {
+          "variables": [
+            {
+              "value": "{{ contact.channel.address | remove:'whatsapp:' }}",
+              "key": "user_number"
+            },
+            {
+              "value": "Twilion",
+              "key": "hotel_name"
+            }
+          ],
+          "offset": {
+            "x": 470,
+            "y": 240
+          }
+        }
+      },
+      {
+        "name": "split_greeting",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "event": "noMatch"
+          },
+          {
+            "next": "ask_booking_id",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value contains booking",
+                "arguments": [
+                  "{{widgets.greeting.inbound.Body}}"
+                ],
+                "type": "contains",
+                "value": "booking"
+              }
+            ]
+          },
+          {
+            "next": "connect_with_agent",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value contains new",
+                "arguments": [
+                  "{{widgets.greeting.inbound.Body}}"
+                ],
+                "type": "contains",
+                "value": "new"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.greeting.inbound.Body}}",
+          "offset": {
+            "x": 330,
+            "y": 770
+          }
+        }
+      },
+      {
+        "name": "greeting",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "split_greeting",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -340,
+            "y": 540
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "Hello!\n\nWelcome to *{{flow.variables.hotel_name}}* 🛎️\nWe wish you a pleasent stay!\n\n- Reply with *Booking* if you are inquiring about an open booking.\n- Reply with *New* if you want to chat with an agent about a new booking.",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "send_to_flex",
+        "type": "send-to-flex",
+        "transitions": [
+          {
+            "event": "callComplete"
+          },
+          {
+            "event": "failedToEnqueue"
+          },
+          {
+            "event": "callFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 780,
+            "y": 3120
+          },
+          "workflow": "WW2d4c913539cc84f1c80ae2140eee167d",
+          "channel": "TC70b7535d7eb19cd592095faad956441d",
+          "attributes": "{ \"customerName\": \"{{flow.variables.customer_name}}\" , \"reservationId\":\"{{flow.variables.reservation_id}}\", \"action\":\"{{widgets.reservation_action.inbound.Body}}\"}"
+        }
+      },
+      {
+        "name": "get_apaleo_token",
+        "type": "run-function",
+        "transitions": [
+          {
+            "next": "greeting",
+            "event": "success"
+          },
+          {
+            "next": "apaleo_conn_fail",
+            "event": "fail"
+          }
+        ],
+        "properties": {
+          "service_sid": "ZSaf6c7f7a3575b9d6cb0655e96a30bdd8",
+          "environment_sid": "ZE116a454816f7b70a584f3eab08d307a6",
+          "offset": {
+            "x": -130,
+            "y": 270
+          },
+          "function_sid": "ZH70825684e5611ddad7d6c1c420f9676e",
+          "url": ""
+        }
+      },
+      {
+        "name": "ask_booking_id",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "split_booking_1",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -570,
+            "y": 1010
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "In order to help you I will need your *Booking Id* provided via email. \n\nIf you dont have it on hand, you can simply provide your *email address* and we will try to find it.\n\nIf you keep having trouble simply reply with *agent* and we will connect you with an available agent.",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "get_reservation",
+        "type": "run-function",
+        "transitions": [
+          {
+            "next": "split_num_of_tickets",
+            "event": "success"
+          },
+          {
+            "next": "no_booking_fail",
+            "event": "fail"
+          }
+        ],
+        "properties": {
+          "service_sid": "ZSaf6c7f7a3575b9d6cb0655e96a30bdd8",
+          "environment_sid": "ZE116a454816f7b70a584f3eab08d307a6",
+          "offset": {
+            "x": -580,
+            "y": 1310
+          },
+          "function_sid": "ZH81cb1cac644e52898ccf0021fd1be30b",
+          "parameters": [
+            {
+              "value": "{{widgets.get_apaleo_token.body}}",
+              "key": "apaleo_token"
+            },
+            {
+              "value": "{{widgets.ask_booking_id.inbound.Body}}",
+              "key": "booking_id"
+            }
+          ],
+          "url": ""
+        }
+      },
+      {
+        "name": "apaleo_conn_fail",
+        "type": "send-message",
+        "transitions": [
+          {
+            "next": "connect_with_agent",
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 1190,
+            "y": 560
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Hello!\nWelcome to *{{flow.variables.hotel_name}}* 🛎️\nWe wish you a pleasent stay!"
+        }
+      },
+      {
+        "name": "split_booking_1",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "next": "get_reservation",
+            "event": "noMatch"
+          },
+          {
+            "next": "connect_with_agent",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to agent",
+                "arguments": [
+                  "{{widgets.ask_booking_id.inbound.Body}}"
+                ],
+                "type": "equal_to",
+                "value": "agent"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.ask_booking_id.inbound.Body}}",
+          "offset": {
+            "x": 110,
+            "y": 1020
+          }
+        }
+      },
+      {
+        "name": "connect_with_agent",
+        "type": "send-message",
+        "transitions": [
+          {
+            "next": "send_to_flex",
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 770,
+            "y": 2830
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "We will now connect you with an available agent."
+        }
+      },
+      {
+        "name": "split_num_of_tickets",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "next": "no_booking_fail",
+            "event": "noMatch"
+          },
+          {
+            "next": "set_booking_variables",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to 1",
+                "arguments": [
+                  "{{widgets.get_reservation.parsed.count}}"
+                ],
+                "type": "equal_to",
+                "value": "1"
+              }
+            ]
+          },
+          {
+            "next": "give_reservation_options",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value greater_than 1",
+                "arguments": [
+                  "{{widgets.get_reservation.parsed.count}}"
+                ],
+                "type": "greater_than",
+                "value": "1"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.get_reservation.parsed.count}}",
+          "offset": {
+            "x": -640,
+            "y": 1590
+          }
+        }
+      },
+      {
+        "name": "set_booking_variables",
+        "type": "set-variables",
+        "transitions": [
+          {
+            "next": "reservation_action",
+            "event": "next"
+          }
+        ],
+        "properties": {
+          "variables": [
+            {
+              "value": "{% if widgets.get_reservation.parsed.count == 1%}0{% else %}{% assign var1 = widgets.give_reservation_options.inbound.Body | minus: 1 %}{{var1}}{% endif %}",
+              "key": "reservation_index"
+            },
+            {
+              "value": "{% if widgets. \nget_reservation.parsed.count == 1%}{{widgets.get_reservation.parsed.reservations[0].id}}{% else %}{% assign var1 = widgets.give_reservation_options.inbound.Body  | minus: 1 %}{{widgets.get_reservation.parsed.reservations[var1].id}}{% endif %}",
+              "key": "reservation_id"
+            },
+            {
+              "value": "{% if widgets. \nget_reservation.parsed.count == 1%}{{widgets.get_reservation.parsed.reservations[0].primaryGuest.firstName}} {{widgets.get_reservation.parsed.reservations[0].primaryGuest.lastName}}{% else %}{% assign var1 = widgets.give_reservation_options.inbound.Body  | minus: 1 %}{{widgets.get_reservation.parsed.reservations[var1].primaryGuest.firstName}} {{widgets.get_reservation.parsed.reservations[var1].primaryGuest.lastName}}{% endif %}",
+              "key": "customer_name"
+            }
+          ],
+          "offset": {
+            "x": -670,
+            "y": 2020
+          }
+        }
+      },
+      {
+        "name": "no_booking_fail",
+        "type": "send-message",
+        "transitions": [
+          {
+            "next": "connect_with_agent",
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 320,
+            "y": 1630
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Unfortunatelly we could not find a reservation with the information that you provided."
+        }
+      },
+      {
+        "name": "give_reservation_options",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "set_booking_variables",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -70,
+            "y": 1820
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "It looks like you have a few reservations open. \nWhich would you like more information about?\n{% for i in (1..widgets.get_reservation.parsed.count) %}\nReply *{{i}}* for the _{{widgets.get_reservation.parsed.reservations[forloop.index0].status}}_ reservation at _{{widgets.get_reservation.parsed.reservations[forloop.index0].property.name}}_ for _{{widgets.get_reservation.parsed.reservations[forloop.index0].adults}}_ guests starting on _{{widgets.get_reservation.parsed.reservations[forloop.index0].arrival | date: \"%b %d, %Y\" }}_\n{% endfor %}",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "reservation_action",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "split_reservation_1",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -70,
+            "y": 2080
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "{% assign var_index = flow.variables.reservation_index| minus: 0 %}\nYour reservation with ID: *{{flow.variables.reservation_id}}* for the hotel *{{widgets.get_reservation.parsed.reservations[var_index].property.name}}* has a status of *{{widgets.get_reservation.parsed.reservations[var_index].status}}*.\n\nIf you would like to add a comment to the reservation reply with *Comment*.\nIf you would like to cancel the reservation, reply with *Cancel*.\nFor everything else, reply with *Agent*.",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "split_reservation_1",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "next": "reservation_no_match",
+            "event": "noMatch"
+          },
+          {
+            "next": "add_comment_1",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to comment",
+                "arguments": [
+                  "{{widgets.reservation_action.inbound.Body}}"
+                ],
+                "type": "equal_to",
+                "value": "comment"
+              }
+            ]
+          },
+          {
+            "next": "cancel_reservation_confirm",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to cancel",
+                "arguments": [
+                  "{{widgets.reservation_action.inbound.Body}}"
+                ],
+                "type": "equal_to",
+                "value": "cancel"
+              }
+            ]
+          },
+          {
+            "next": "connect_with_agent",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to agent",
+                "arguments": [
+                  "{{widgets.reservation_action.inbound.Body}}"
+                ],
+                "type": "equal_to",
+                "value": "agent"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.reservation_action.inbound.Body}}",
+          "offset": {
+            "x": -760,
+            "y": 2330
+          }
+        }
+      },
+      {
+        "name": "reservation_no_match",
+        "type": "send-message",
+        "transitions": [
+          {
+            "next": "reservation_action",
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 100,
+            "y": 2440
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Sorry, I did not get that..."
+        }
+      },
+      {
+        "name": "add_comment_1",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "set_comment",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -1010,
+            "y": 2770
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "{% assign var_index = flow.variables.reservation_index| minus: 0 %}\nPlease add your comment now and we will inform the Hotel *{{widgets.get_reservation.parsed.reservations[var_index].property.name}}* about your request.",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "split_comment",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "event": "noMatch"
+          },
+          {
+            "next": "connect_with_agent",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to agent",
+                "arguments": [
+                  "{{widgets.connect_to_agent.inbound.Body}}"
+                ],
+                "type": "equal_to",
+                "value": "agent"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.connect_to_agent.inbound.Body}}",
+          "offset": {
+            "x": 300,
+            "y": 3510
+          }
+        }
+      },
+      {
+        "name": "set_comment",
+        "type": "run-function",
+        "transitions": [
+          {
+            "next": "add_comment_2",
+            "event": "success"
+          },
+          {
+            "event": "fail"
+          }
+        ],
+        "properties": {
+          "service_sid": "ZSaf6c7f7a3575b9d6cb0655e96a30bdd8",
+          "environment_sid": "ZE116a454816f7b70a584f3eab08d307a6",
+          "offset": {
+            "x": -1300,
+            "y": 3080
+          },
+          "function_sid": "ZHc22704e1d02aff705b887614e6055220",
+          "parameters": [
+            {
+              "value": "{{flow.variables.reservation_id}}",
+              "key": "reservation_id"
+            },
+            {
+              "value": "{{widgets.add_comment_1.inbound.Body}}",
+              "key": "comment"
+            },
+            {
+              "value": "{{widgets.get_apaleo_token.body}}",
+              "key": "apaleo_token"
+            }
+          ],
+          "url": ""
+        }
+      },
+      {
+        "name": "cancel_reservation_confirm",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "split_cancel",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -370,
+            "y": 2770
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "Are you sure you want to cancel this reservation?\n\nCancelations fees might apply.\n\n_This action is irreversable._",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "split_cancel",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "event": "noMatch"
+          },
+          {
+            "next": "cancel_reservation",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to yes",
+                "arguments": [
+                  "{{widgets.cancel_reservation_confirm.inbound.Body}}"
+                ],
+                "type": "equal_to",
+                "value": "yes"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.cancel_reservation_confirm.inbound.Body}}",
+          "offset": {
+            "x": -550,
+            "y": 2980
+          }
+        }
+      },
+      {
+        "name": "cancel_reservation",
+        "type": "run-function",
+        "transitions": [
+          {
+            "next": "cancel_reservation_2",
+            "event": "success"
+          },
+          {
+            "event": "fail"
+          }
+        ],
+        "properties": {
+          "service_sid": "ZSaf6c7f7a3575b9d6cb0655e96a30bdd8",
+          "environment_sid": "ZE116a454816f7b70a584f3eab08d307a6",
+          "offset": {
+            "x": -130,
+            "y": 2990
+          },
+          "function_sid": "ZHdd15109e531b870b2cd984ddddfc1a95",
+          "parameters": [
+            {
+              "value": "{{flow.variables.reservation_id",
+              "key": "reservation_id"
+            },
+            {
+              "value": "{{widgets.get_apaleo_token.body}}",
+              "key": "apaleo_token"
+            }
+          ],
+          "url": ""
+        }
+      },
+      {
+        "name": "connect_to_agent",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "split_comment",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -710,
+            "y": 3530
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "If you still want to talk to an agent please reply with *agent* else we wish you a nice day ☀️",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "add_comment_2",
+        "type": "send-message",
+        "transitions": [
+          {
+            "next": "connect_to_agent",
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -890,
+            "y": 3090
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Thank you. Your comment: _{{widgets.add_comment_1.inbound.Body}}_ is added to the reservation."
+        }
+      },
+      {
+        "name": "cancel_reservation_2",
+        "type": "send-message",
+        "transitions": [
+          {
+            "next": "connect_to_agent",
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -340,
+            "y": 3240
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Your reservation is canceled."
+        }
+      }
+    ],
+    "initial_state": "Trigger",
+    "flags": {
+      "allow_concurrent_calls": true
+    }
+  }
