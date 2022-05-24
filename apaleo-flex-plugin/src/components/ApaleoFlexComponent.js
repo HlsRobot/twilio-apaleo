@@ -5,8 +5,8 @@ const ApaleoFlexComponent = (props) => {
 
   let apaleoURL = `https://app.apaleo.com/MUC/reservations/`
  return (
-  <div style="height:100%;">
-    <iframe src={apaleoURL} height="100vh" width="100%" frameborder="0" />
+  <div style={{height: "100%"}}>
+    <iframe src={apaleoURL} height="100%" width="100%" frameBorder="0" />
   </div>
  )
 }

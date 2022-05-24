@@ -24,7 +24,7 @@ export default class ApaleoFlexPlugin extends FlexPlugin {
     this.registerReducers(manager);
 
     const options = { sortOrder: -1 };
-    flex.AgentDesktopView.Panel1.Content.add(<CustomTaskListContainer key="ApaleoFlexPlugin-component" />, options);
+    // flex.AgentDesktopView.Panel1.Content.add(<CustomTaskListContainer key="ApaleoFlexPlugin-component" />, options);
     flex.CRMContainer.Content.replace(
       <ApaleoFlexComponent key="sample" />
     ); //  Add your component here
