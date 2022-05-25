@@ -11,9 +11,13 @@ exports.handler = function(context, event, callback) {
       method: 'post',
       url: context.APALEO_IDENTITY_DOMAIN + '/connect/token',
       responseType: 'json',
+      auth: {
+        username: context.APALEO_CLIENT_ID,
+        password: context.APALEO_CLIENT_SECRET
+      },
       headers: {
         'Content-Type':'application/x-www-form-urlencoded',
-        'Authorization':'Basic UllKUy1TUC1GTEVYOmhiSDFZVXlxMWxpb2pPbUxXZjZZdVJSWXZJWFhrQQ=='},
+      },
       data: params //qs.stringify({ 'grant_type': 'client_credentials' })
     })
     .then(function (response) {

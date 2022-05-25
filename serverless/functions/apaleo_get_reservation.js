@@ -7,7 +7,7 @@ exports.handler = function(context, event, callback) {
   
     axios({
       method: 'get',
-      url: context.APALEO_API_DOMAIN + '/booking/v1/reservations/?textSearch' + event.booking_id + '&status=Confirmed,InHouse',
+      url: context.APALEO_API_DOMAIN + '/booking/v1/reservations/?textSearch=' + event.booking_id + '&status=Confirmed,InHouse',
       responseType: 'json',
       headers: {
         'Authorization': 'Bearer ' + event.apaleo_token
